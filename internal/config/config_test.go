@@ -1015,6 +1015,40 @@ exclude_projects = ["gamma"]
 	}
 }
 
+func TestLoadFile_PortableResumeConfig(t *testing.T) {
+	dir := setupTestEnv(t)
+	writeConfig(t, dir, map[string]any{
+		"portable_resume": map[string]any{
+			"repo_roots": []string{
+				"/home/alice/src",
+				"/mnt/worktrees",
+			},
+			"repos": []map[string]any{
+				{
+					"project": "agentsview",
+					"path":    "/home/alice/src/agentsview",
+				},
+			},
+		},
+	})
+
+	cfg, err := LoadMinimal()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := strings.Join(cfg.PortableResume.RepoRoots, ","); got != "/home/alice/src,/mnt/worktrees" {
+		t.Fatalf("RepoRoots = %q", got)
+	}
+	if len(cfg.PortableResume.Repos) != 1 {
+		t.Fatalf("Repos = %v, want one repo", cfg.PortableResume.Repos)
+	}
+	repo := cfg.PortableResume.Repos[0]
+	if repo.Project != "agentsview" || repo.Path != "/home/alice/src/agentsview" {
+		t.Fatalf("Repo = %+v", repo)
+	}
+}
+
 func TestResolvePG_Defaults(t *testing.T) {
 	cfg := Config{
 		PG: PGConfig{

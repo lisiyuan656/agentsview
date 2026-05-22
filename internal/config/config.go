@@ -65,6 +65,20 @@ type PGConfig struct {
 	ExcludeProjects []string `toml:"exclude_projects" json:"exclude_projects,omitempty"`
 }
 
+// PortableResumeRepo maps a canonical project name to this
+// machine's local repository path.
+type PortableResumeRepo struct {
+	Project string `toml:"project" json:"project"`
+	Path    string `toml:"path" json:"path"`
+}
+
+// PortableResumeConfig controls local resolution for sessions
+// restored from PostgreSQL onto another machine.
+type PortableResumeConfig struct {
+	RepoRoots []string             `toml:"repo_roots" json:"repo_roots,omitempty"`
+	Repos     []PortableResumeRepo `toml:"repos" json:"repos,omitempty"`
+}
+
 // AutomatedConfig holds user-supplied additions to the
 // automated-session classifier. Parse-only; all semantic
 // normalization (trim, dedupe, length cap, built-in overlap
@@ -104,6 +118,7 @@ type Config struct {
 	DisableUpdateCheck   bool                   `json:"disable_update_check" toml:"disable_update_check"`
 	NoSync               bool                   `json:"-" toml:"-"`
 	PG                   PGConfig               `json:"pg,omitempty" toml:"pg"`
+	PortableResume       PortableResumeConfig   `json:"portable_resume,omitempty" toml:"portable_resume"`
 	Automated            AutomatedConfig        `json:"automated,omitempty" toml:"automated"`
 	Agent                map[string]AgentConfig `json:"agent,omitempty" toml:"agent"`
 	WriteTimeout         time.Duration          `json:"-" toml:"-"`
@@ -371,6 +386,7 @@ func (c *Config) loadFile() error {
 		RemoteAccess                   bool                       `toml:"remote_access"`
 		DisableUpdateCheck             bool                       `toml:"disable_update_check"`
 		PG                             PGConfig                   `toml:"pg"`
+		PortableResume                 PortableResumeConfig       `toml:"portable_resume"`
 		Automated                      AutomatedConfig            `toml:"automated"`
 		Agent                          map[string]AgentConfig     `toml:"agent"`
 		EventsCoalesceInterval         time.Duration              `toml:"events_coalesce_interval"`
@@ -431,6 +447,12 @@ func (c *Config) loadFile() error {
 	}
 	if file.PG.ExcludeProjects != nil && c.PG.ExcludeProjects == nil {
 		c.PG.ExcludeProjects = file.PG.ExcludeProjects
+	}
+	if file.PortableResume.RepoRoots != nil {
+		c.PortableResume.RepoRoots = file.PortableResume.RepoRoots
+	}
+	if file.PortableResume.Repos != nil {
+		c.PortableResume.Repos = file.PortableResume.Repos
 	}
 	// IsDefined distinguishes "unset" (leave default 10s) from an
 	// explicit "0s" (disable coalescing). Checking != 0 would silently

@@ -1227,6 +1227,12 @@ func TestParseCodexSession_WorktreeBranchFallback(t *testing.T) {
 	if sess.Project != "agentsview" {
 		t.Fatalf("project = %q, want %q", sess.Project, "agentsview")
 	}
+	if sess.Cwd != "/Users/wesm/code/agentsview-worktree-tool-call-arguments" {
+		t.Fatalf("cwd = %q", sess.Cwd)
+	}
+	if sess.GitBranch != "worktree-tool-call-arguments" {
+		t.Fatalf("git branch = %q", sess.GitBranch)
+	}
 }
 
 func TestExtractClaudeProjectHints(t *testing.T) {

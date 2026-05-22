@@ -28,11 +28,15 @@ import (
 // trigger a non-destructive re-sync (mtime reset + skip cache
 // clear) so existing session data is preserved.
 //
-// Bumped to 29: secret findings now record tool_result_event
+// Bumped to 30: Codex parser now persists cwd and git branch
+// metadata from session_meta. Existing rows need re-parsing so
+// portable resume can resolve local repositories accurately.
+//
+// (29: secret findings now record tool_result_event
 // coordinates by the persisted slice position (matching
 // tool_result_events.event_index) instead of the parser's raw event
 // index. Existing rows need re-scanning so stored findings normalize
-// and `secrets list --reveal` can re-read the source.
+// and `secrets list --reveal` can re-read the source.)
 //
 // (28: Gemini parser now persists normalized
 // (Anthropic-style) per-message token_usage JSON instead of the raw
@@ -95,7 +99,7 @@ import (
 //
 // (17: Codex <skill> template filtering.)
 // (16: <turn_aborted> system messages.)
-const dataVersion = 29
+const dataVersion = 30
 
 const tokenCoverageRepairStatsKey = "token_coverage_repair_v1"
 

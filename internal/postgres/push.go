@@ -2,11 +2,16 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"maps"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -411,6 +416,18 @@ func (s *Sync) pushBatch(
 			return batchResult{}, nil
 		}
 
+		if err := s.pushNativeSessionBlob(
+			ctx, tx, sess,
+		); err != nil {
+			log.Printf(
+				"pgsync: session %s: %v",
+				sess.ID, err,
+			)
+			_ = tx.Rollback()
+			*pushed = (*pushed)[:len(*pushed)-n]
+			return batchResult{}, nil
+		}
+
 		findingsChanged, err := s.pushSecretFindings(ctx, tx, sess.ID)
 		if err != nil {
 			log.Printf(
@@ -752,11 +769,74 @@ func nilStrTS(s *string) any {
 	return t
 }
 
+func (s *Sync) pushNativeSessionBlob(
+	ctx context.Context, tx *sql.Tx, sess db.Session,
+) error {
+	if sess.Agent != "codex" || sess.FilePath == nil ||
+		*sess.FilePath == "" || sess.DeletedAt != nil {
+		return nil
+	}
+
+	content, err := os.ReadFile(*sess.FilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("reading native session file: %w", err)
+	}
+	sum := sha256.Sum256(content)
+	var sourceMtime *time.Time
+	if sess.FileMtime != nil {
+		t := time.Unix(0, *sess.FileMtime).UTC()
+		sourceMtime = &t
+	} else if info, statErr := os.Stat(*sess.FilePath); statErr == nil {
+		t := info.ModTime().UTC()
+		sourceMtime = &t
+	}
+
+	return UpsertNativeSessionBlob(ctx, tx, NativeSessionBlob{
+		SessionID:      sess.ID,
+		Agent:          sess.Agent,
+		SourceMachine:  s.machine,
+		Project:        sess.Project,
+		SourcePath:     *sess.FilePath,
+		SourceRepoRoot: localGitRepoRoot(ctx, sess.Cwd),
+		Filename:       filepath.Base(*sess.FilePath),
+		Cwd:            sess.Cwd,
+		GitBranch:      sess.GitBranch,
+		Content:        content,
+		ContentSHA256:  hex.EncodeToString(sum[:]),
+		SizeBytes:      int64(len(content)),
+		SourceMtime:    sourceMtime,
+	})
+}
+
+func localGitRepoRoot(ctx context.Context, cwd string) string {
+	if cwd == "" {
+		return ""
+	}
+	info, err := os.Stat(cwd)
+	if err != nil || !info.IsDir() {
+		return ""
+	}
+	gitCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(
+		gitCtx, "git", "rev-parse", "--show-toplevel",
+	)
+	cmd.Dir = cwd
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
 // pushSession upserts a single session into PG.
-// File-level metadata (file_hash, file_path, file_size,
-// file_mtime) is intentionally not synced to PG -- it is
-// local-only and used solely by the sync engine to detect
-// re-parsed sessions.
+// File-level sync metadata (file_hash, file_size, file_mtime)
+// remains local-only for the normalized sessions table. Codex
+// source path and transcript bytes are stored separately in
+// native_session_blobs for portable resume.
 func (s *Sync) pushSession(
 	ctx context.Context, tx *sql.Tx, sess db.Session,
 ) error {

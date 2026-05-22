@@ -160,6 +160,33 @@ CREATE INDEX IF NOT EXISTS idx_pinned_source_uuid
     ON pinned_messages (session_id, source_uuid)
     WHERE source_uuid <> '';
 
+CREATE TABLE IF NOT EXISTS native_session_blobs (
+    session_id     TEXT NOT NULL,
+    agent          TEXT NOT NULL,
+    source_machine TEXT NOT NULL,
+    project        TEXT NOT NULL DEFAULT '',
+    source_path    TEXT NOT NULL DEFAULT '',
+    source_repo_root TEXT NOT NULL DEFAULT '',
+    filename       TEXT NOT NULL DEFAULT '',
+    cwd            TEXT NOT NULL DEFAULT '',
+    git_branch     TEXT NOT NULL DEFAULT '',
+    content        BYTEA NOT NULL,
+    content_sha256 TEXT NOT NULL,
+    size_bytes     BIGINT NOT NULL DEFAULT 0,
+    source_mtime   TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (session_id, agent, source_machine),
+    FOREIGN KEY (session_id)
+        REFERENCES sessions(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_native_session_blobs_session
+    ON native_session_blobs (session_id);
+
+CREATE INDEX IF NOT EXISTS idx_native_session_blobs_hash
+    ON native_session_blobs (session_id, agent, content_sha256);
+
 CREATE TABLE IF NOT EXISTS model_pricing (
     model_pattern TEXT PRIMARY KEY,
     input_per_mtok DOUBLE PRECISION NOT NULL DEFAULT 0,

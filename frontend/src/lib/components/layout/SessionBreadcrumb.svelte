@@ -3,6 +3,7 @@
   import type { Session } from "../../api/types.js";
   import {
     resumeSession,
+    getPortableResume,
     openSession,
     getSessionDirectory,
     listOpeners,
@@ -15,6 +16,7 @@
   import { getGradeStyle, getGradeLabel } from "../../utils/grade.js";
   import SignalPanel from "../content/SignalPanel.svelte";
   import { sessions } from "../../stores/sessions.svelte.js";
+  import { sync } from "../../stores/sync.svelte.js";
   import { router } from "../../stores/router.svelte.js";
   import {
     supportsResume,
@@ -250,6 +252,22 @@
     }
   }
 
+  async function handleCopyPortableResumeCommand() {
+    if (!session) return;
+    showOpenMenu = false;
+    try {
+      const resp = await getPortableResume(session.id);
+      if (resp.supported && resp.command) {
+        const ok = await copyToClipboard(resp.command);
+        showFeedback(ok ? "Command copied!" : "Failed");
+        return;
+      }
+      showFeedback(resp.error ?? "Not available");
+    } catch {
+      showFeedback("Not available");
+    }
+  }
+
   async function handleCopyFilePath() {
     showOpenMenu = false;
     if (!sessionDir) {
@@ -307,7 +325,16 @@
 
   const canResume = $derived(
     session
-      ? supportsResume(session.agent) && isLocal
+      ? supportsResume(session.agent) &&
+        isLocal &&
+        sync.serverVersion?.read_only !== true
+      : false,
+  );
+
+  const canPortableResume = $derived(
+    session
+      ? session.agent === "codex" &&
+        sync.serverVersion?.read_only === true
       : false,
   );
 
@@ -331,6 +358,7 @@
 
   const showDropdown = $derived(
     canResume ||
+    canPortableResume ||
     (isLocal && (
       editorOpeners.length > 0 ||
       fileOpeners.length > 0 ||
@@ -443,8 +471,12 @@
             class="resume-btn"
             class:has-feedback={openFeedback !== ""}
             onclick={(e) => { e.stopPropagation(); showOpenMenu = !showOpenMenu; }}
-            title={canResume ? "Resume session in terminal" : "Session actions"}
-            aria-label={canResume ? "Resume session" : "Session actions"}
+            title={canResume
+              ? "Resume session in terminal"
+              : canPortableResume
+                ? "Copy portable resume command"
+                : "Session actions"}
+            aria-label={canResume || canPortableResume ? "Resume session" : "Session actions"}
           >
             {#if openFeedback}
               <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -452,7 +484,7 @@
               </svg>
               {openFeedback}
             {:else}
-              {canResume ? "Resume" : "Open"}
+              {canResume || canPortableResume ? "Resume" : "Open"}
               <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M4.427 7.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 7H4.604a.25.25 0 00-.177.427z"/>
               </svg>
@@ -487,6 +519,16 @@
                     </svg>
                   </span>
                   <span class="open-menu-name">Copy command</span>
+                </button>
+              {:else if canPortableResume}
+                <button class="open-menu-item" onclick={handleCopyPortableResumeCommand}>
+                  <span class="open-menu-num">
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"/>
+                      <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"/>
+                    </svg>
+                  </span>
+                  <span class="open-menu-name">Copy portable command</span>
                 </button>
               {/if}
               {#if isLocal}

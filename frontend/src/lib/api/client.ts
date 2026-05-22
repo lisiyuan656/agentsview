@@ -695,6 +695,41 @@ export function resumeSession(
   });
 }
 
+export interface PortableResumeCandidate {
+  session_id: string;
+  agent: string;
+  source_machine: string;
+  project: string;
+  source_path?: string;
+  source_repo_root?: string;
+  filename?: string;
+  cwd?: string;
+  git_branch?: string;
+  content_sha256: string;
+  size_bytes: number;
+  source_mtime?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortableResumeResponse {
+  supported: boolean;
+  session_id: string;
+  agent: string;
+  command?: string;
+  project?: string;
+  cwd?: string;
+  git_branch?: string;
+  candidates?: PortableResumeCandidate[];
+  error?: string;
+}
+
+export function getPortableResume(
+  sessionId: string,
+): Promise<PortableResumeResponse> {
+  return fetchJSON(`/sessions/${sessionId}/portable-resume`);
+}
+
 /* Publish / GitHub config */
 
 export function publishSession(sessionId: string): Promise<PublishResponse> {

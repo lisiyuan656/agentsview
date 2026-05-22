@@ -6,6 +6,7 @@ import { router } from "../stores/router.svelte.js";
 import { inSessionSearch } from "../stores/inSessionSearch.svelte.js";
 import {
   getExportUrl,
+  getPortableResume,
   resumeSession,
 } from "../api/client.js";
 import {
@@ -182,7 +183,23 @@ export function registerShortcuts(
       },
       c: () => {
         const session = sessions.activeSession;
-        if (session && supportsResume(session.agent) && !session.id.includes("~")) {
+        if (
+          session?.agent === "codex" &&
+          sync.serverVersion?.read_only === true
+        ) {
+          getPortableResume(session.id).then((resp) => {
+            if (resp.supported && resp.command) {
+              copyToClipboard(resp.command);
+            }
+          }).catch(() => {});
+          return;
+        }
+        if (
+          session &&
+          supportsResume(session.agent) &&
+          !session.id.includes("~") &&
+          sync.serverVersion?.read_only !== true
+        ) {
           // Copy a runnable resume command. Cursor needs the backend cwd
           // applied client-side so the copied command is self-contained.
           resumeSession(session.id, { command_only: true }).then((resp) => {

@@ -11,12 +11,17 @@ import { mount, unmount, tick } from "svelte";
 // @ts-ignore
 import SessionBreadcrumb from "./SessionBreadcrumb.svelte";
 import type { Session } from "../../api/types.js";
+import { sync } from "../../stores/sync.svelte.js";
 
 vi.mock("../../api/client.js", () => ({
   listOpeners: vi.fn().mockResolvedValue({ openers: [] }),
   getSessionDirectory: vi
     .fn()
     .mockResolvedValue({ path: "" }),
+  getPortableResume: vi.fn().mockResolvedValue({
+    supported: true,
+    command: "agentsview pg resume codex:abc",
+  }),
   resumeSession: vi.fn(),
   openSession: vi.fn(),
 }));
@@ -54,6 +59,7 @@ function makeSession(
 
 afterEach(() => {
   document.body.innerHTML = "";
+  sync.serverVersion = null;
 });
 
 describe("SessionBreadcrumb", () => {
@@ -245,6 +251,38 @@ describe("SessionBreadcrumb", () => {
     // for remote sessions (no resume, no copy-dir, no open-in).
     const resumeBtn = document.querySelector(".resume-btn");
     expect(resumeBtn).toBeNull();
+
+    unmount(component);
+  });
+
+  it("shows portable resume action in read-only PG mode for Codex", async () => {
+    sync.serverVersion = {
+      version: "dev",
+      commit: "test",
+      build_date: "",
+      read_only: true,
+    };
+
+    const component = mount(SessionBreadcrumb, {
+      target: document.body,
+      props: {
+        session: makeSession("codex", {
+          id: "codex:abc-123",
+        }),
+        onBack: () => {},
+      },
+    });
+
+    await tick();
+
+    const resumeBtn = document.querySelector<HTMLButtonElement>(".resume-btn");
+    expect(resumeBtn).toBeTruthy();
+    resumeBtn?.click();
+    await tick();
+
+    expect(document.body.textContent).toContain(
+      "Copy portable command",
+    );
 
     unmount(component);
   });

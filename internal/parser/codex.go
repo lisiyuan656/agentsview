@@ -39,6 +39,8 @@ type codexSessionBuilder struct {
 	endedAt              time.Time
 	sessionID            string
 	project              string
+	cwd                  string
+	gitBranch            string
 	ordinal              int
 	currentModel         string
 	callNames            map[string]string
@@ -124,6 +126,8 @@ func (b *codexSessionBuilder) handleSessionMeta(
 
 	if cwd := payload.Get("cwd").Str; cwd != "" {
 		branch := payload.Get("git.branch").Str
+		b.cwd = cwd
+		b.gitBranch = branch
 		if proj := ExtractProjectFromCwdWithBranch(cwd, branch); proj != "" {
 			b.project = proj
 		} else {
@@ -1187,6 +1191,8 @@ func ParseCodexSession(
 		Project:           b.project,
 		Machine:           machine,
 		Agent:             AgentCodex,
+		Cwd:               b.cwd,
+		GitBranch:         b.gitBranch,
 		FirstMessage:      b.firstMessage,
 		StartedAt:         b.startedAt,
 		EndedAt:           b.endedAt,

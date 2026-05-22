@@ -244,6 +244,9 @@ func (s *Server) routes() {
 	s.mux.Handle(
 		"POST /api/v1/sessions/{id}/resume", s.withTimeout(s.handleResumeSession),
 	)
+	s.mux.Handle(
+		"GET /api/v1/sessions/{id}/portable-resume", s.withTimeout(s.handlePortableResumeSession),
+	)
 	s.mux.Handle("GET /api/v1/openers", s.withTimeout(s.handleListOpeners))
 	s.mux.Handle("GET /api/v1/sessions/{id}/directory", s.withTimeout(s.handleGetSessionDir))
 	s.mux.Handle("GET /api/v1/sessions/{id}/search", s.withTimeout(s.handleSearchSession))
