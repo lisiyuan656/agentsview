@@ -75,8 +75,9 @@ type PortableResumeRepo struct {
 // PortableResumeConfig controls local resolution for sessions
 // restored from PostgreSQL onto another machine.
 type PortableResumeConfig struct {
-	RepoRoots []string             `toml:"repo_roots" json:"repo_roots,omitempty"`
-	Repos     []PortableResumeRepo `toml:"repos" json:"repos,omitempty"`
+	RepoRoots               []string             `toml:"repo_roots" json:"repo_roots,omitempty"`
+	Repos                   []PortableResumeRepo `toml:"repos" json:"repos,omitempty"`
+	UploadNativeTranscripts bool                 `toml:"upload_native_transcripts" json:"upload_native_transcripts,omitempty"`
 }
 
 // AutomatedConfig holds user-supplied additions to the
@@ -453,6 +454,9 @@ func (c *Config) loadFile() error {
 	}
 	if file.PortableResume.Repos != nil {
 		c.PortableResume.Repos = file.PortableResume.Repos
+	}
+	if file.PortableResume.UploadNativeTranscripts {
+		c.PortableResume.UploadNativeTranscripts = true
 	}
 	// IsDefined distinguishes "unset" (leave default 10s) from an
 	// explicit "0s" (disable coalescing). Checking != 0 would silently

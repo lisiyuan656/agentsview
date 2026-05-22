@@ -34,6 +34,8 @@ type Sync struct {
 	projects        []string
 	excludeProjects []string
 
+	uploadNativeTranscripts bool
+
 	closeOnce sync.Once
 	closeErr  error
 
@@ -49,6 +51,11 @@ type SyncOptions struct {
 	// ExcludeProjects excludes these project names from push.
 	// Mutually exclusive with Projects.
 	ExcludeProjects []string
+	// UploadNativeTranscripts stores raw agent-native transcripts
+	// in PostgreSQL. This can include data intentionally omitted
+	// from normalized tables by parser redaction settings, so it
+	// must be explicitly enabled by the user.
+	UploadNativeTranscripts bool
 }
 
 // New creates a Sync instance and verifies the PG connection.
@@ -86,12 +93,13 @@ func New(
 	}
 
 	return &Sync{
-		pg:              pg,
-		local:           local,
-		machine:         machine,
-		schema:          schema,
-		projects:        opts.Projects,
-		excludeProjects: opts.ExcludeProjects,
+		pg:                      pg,
+		local:                   local,
+		machine:                 machine,
+		schema:                  schema,
+		projects:                opts.Projects,
+		excludeProjects:         opts.ExcludeProjects,
+		uploadNativeTranscripts: opts.UploadNativeTranscripts,
 	}, nil
 }
 

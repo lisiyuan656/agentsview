@@ -63,7 +63,7 @@ func PrepareCodexResume(
 	}
 	if blob == nil {
 		return ResumeResult{}, fmt.Errorf(
-			"no portable Codex transcript found for %s; run agentsview pg push --full on the source machine",
+			"no portable Codex transcript found for %s; enable [portable_resume].upload_native_transcripts on the source machine and run agentsview pg push --full",
 			fullID,
 		)
 	}

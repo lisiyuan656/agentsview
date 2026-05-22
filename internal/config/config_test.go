@@ -767,6 +767,11 @@ func TestDefault_ResultContentBlockedCategories(t *testing.T) {
 			)
 		}
 	}
+	if cfg.PortableResume.UploadNativeTranscripts {
+		t.Fatal(
+			"PortableResume.UploadNativeTranscripts default = true, want false",
+		)
+	}
 }
 
 func TestLoadFile_ResultContentBlockedCategories(t *testing.T) {
@@ -1029,6 +1034,7 @@ func TestLoadFile_PortableResumeConfig(t *testing.T) {
 					"path":    "/home/alice/src/agentsview",
 				},
 			},
+			"upload_native_transcripts": true,
 		},
 	})
 
@@ -1046,6 +1052,9 @@ func TestLoadFile_PortableResumeConfig(t *testing.T) {
 	repo := cfg.PortableResume.Repos[0]
 	if repo.Project != "agentsview" || repo.Path != "/home/alice/src/agentsview" {
 		t.Fatalf("Repo = %+v", repo)
+	}
+	if !cfg.PortableResume.UploadNativeTranscripts {
+		t.Fatalf("UploadNativeTranscripts = false, want true")
 	}
 }
 

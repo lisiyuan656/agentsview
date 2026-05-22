@@ -78,7 +78,7 @@ func (s *Server) handlePortableResumeSession(
 			Project:   session.Project,
 			Cwd:       session.Cwd,
 			GitBranch: session.GitBranch,
-			Error:     "no portable transcript found; run agentsview pg push --full on the source machine",
+			Error:     "no portable transcript found; enable [portable_resume].upload_native_transcripts on the source machine and run agentsview pg push --full",
 		})
 		return
 	}

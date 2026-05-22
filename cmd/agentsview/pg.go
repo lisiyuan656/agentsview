@@ -108,8 +108,9 @@ func runPGPush(cfg PGPushConfig) {
 		pgCfg.URL, pgCfg.Schema, database,
 		pgCfg.MachineName, pgCfg.AllowInsecure,
 		postgres.SyncOptions{
-			Projects:        projects,
-			ExcludeProjects: excludeProjects,
+			Projects:                projects,
+			ExcludeProjects:         excludeProjects,
+			UploadNativeTranscripts: appCfg.PortableResume.UploadNativeTranscripts,
 		},
 	)
 	if err != nil {

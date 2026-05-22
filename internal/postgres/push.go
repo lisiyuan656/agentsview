@@ -772,6 +772,9 @@ func nilStrTS(s *string) any {
 func (s *Sync) pushNativeSessionBlob(
 	ctx context.Context, tx *sql.Tx, sess db.Session,
 ) error {
+	if !s.uploadNativeTranscripts {
+		return nil
+	}
 	if sess.Agent != "codex" || sess.FilePath == nil ||
 		*sess.FilePath == "" || sess.DeletedAt != nil {
 		return nil
