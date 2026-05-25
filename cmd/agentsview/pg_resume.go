@@ -7,8 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/spf13/cobra"
-	"github.com/wesm/agentsview/internal/config"
-	"github.com/wesm/agentsview/internal/portable"
+	"go.kenn.io/agentsview/internal/config"
+	"go.kenn.io/agentsview/internal/portable"
 )
 
 type PGResumeConfig struct {

@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/tidwall/gjson"
-	"github.com/wesm/agentsview/internal/config"
-	"github.com/wesm/agentsview/internal/postgres"
+	"go.kenn.io/agentsview/internal/config"
+	"go.kenn.io/agentsview/internal/postgres"
 )
 
 func TestRewriteCodexSessionCwd(t *testing.T) {

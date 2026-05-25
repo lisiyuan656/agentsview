@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/tidwall/gjson"
-	"github.com/wesm/agentsview/internal/config"
-	"github.com/wesm/agentsview/internal/parser"
-	"github.com/wesm/agentsview/internal/postgres"
+	"go.kenn.io/agentsview/internal/config"
+	"go.kenn.io/agentsview/internal/parser"
+	"go.kenn.io/agentsview/internal/postgres"
 )
 
 // ResumeOptions controls a portable Codex resume preparation.

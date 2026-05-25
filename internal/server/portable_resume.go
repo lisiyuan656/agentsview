@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/wesm/agentsview/internal/parser"
-	"github.com/wesm/agentsview/internal/postgres"
+	"go.kenn.io/agentsview/internal/parser"
+	"go.kenn.io/agentsview/internal/postgres"
 )
 
 type nativeBlobLister interface {
